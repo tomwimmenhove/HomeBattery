@@ -1,6 +1,9 @@
 set stty:
 stty -F /dev/ttyUSB0 -hupcl
 
+bind usb:
+usbip list --local
+
 --- mbpoll commands ---
 Read coil 1:
 mbpoll -m rtu -a 11 -b 115200 -0 -t 0 -r 1 -c 1 -1 /dev/ttyUSB1
