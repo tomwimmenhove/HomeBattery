@@ -1,0 +1,16 @@
+./inverter_controller.py --url http://pow:8000/stream -H 0 | ./gtn_send_stream.py -p /dev/ttyUSB0
+
+/usr/bin/arduino-cli compile --fqbn arduino:avr:nano:cpu=atmega328old charger/ && /usr/bin/arduino-cli upload -p /dev/ttyUSB1 --fqbn arduino:avr:nano:cpu=atmega328old charger
+
+
+
+arduino-cli monitor -p /dev/ttyUSB1 -c baudrate=115200
+power meter to influx:
+ curl -Ns  http://pow:8000/stream | jq --unbuffered '(.fields.active_power_import_kW[0][0].value - .fields.active_power_export_kW[0][0].value) * 1000.0' | while read a ; do line="${MEASUREMENT} power=$a" ; echo "$line" ;  curl -sS -i -XPOST "${INFLUX_URL}/api/v2/write?org=${INFLUX_ORG}&bucket=${INFLUX_BUCKET}&precision=${PRECISION}"   -H "Authorization: Token ${INFLUX_TOKEN}"   -H "Content-Type: text/plain; charset=utf-8"   --data-binary "$line" ; done
+
+charger to influx:
+while true ; do curl -s "http://127.0.0.1:8000/api/measurements?unit=11" | ./json2influx.sh  ; sleep 1 ; done
+
+USB bind:
+sudo usbip attach -r 192.168.0.114 -b 1-1.3
+sudo usbip attach -r 192.168.0.114 -b 1-1.5

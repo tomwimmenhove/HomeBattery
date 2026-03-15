@@ -1,0 +1,48 @@
+set stty:
+stty -F /dev/ttyUSB0 -hupcl
+
+--- mbpoll commands ---
+Read coil 1:
+mbpoll -m rtu -a 11 -b 115200 -0 -t 0 -r 1 -c 1 -1 /dev/ttyUSB1
+
+write to coil 1:
+mbpoll -m rtu -a 11 -b 115200 -0 -t 0 -r 1 /dev/ttyUSB1 1
+
+Read status:
+mbpoll -m rtu -a 11 -b 115200 -0 -t 3 -r 0 -c 13  /dev/ttyUSB1 -1
+
+Read holding:
+mbpoll -m rtu -a 11 -b 115200 -0 -t 4 -r 0 -c 13  /dev/ttyUSB1
+
+Enable unit:
+mbpoll -m rtu -a 11 -b 115200 -0 -t 0 -r 1 /dev/ttyUSB1 1
+
+Disable unit:
+mbpoll -m rtu -a 11 -b 115200 -0 -t 0 -r 1 /dev/ttyUSB1 0
+
+Read number of PSUs:
+mbpoll -m rtu -a 11 -b 115200 -0 -t 3 -r 15 -c 1  /dev/ttyUSB1 -1
+
+Read current status:
+mbpoll -m rtu -a 11 -b 115200 -0 -t 3 -r 0 -c 13  /dev/ttyUSB1
+
+Read per-PSU status:
+PSU1: mbpoll -m rtu -a 11 -b 115200 -0 -t 3 -r 256 -c 13  /dev/ttyUSB1
+PSU2: mbpoll -m rtu -a 11 -b 115200 -0 -t 3 -r 512 -c 13  /dev/ttyUSB1
+
+Read current config:
+mbpoll -m rtu -a 11 -b 115200 -0 -t 4 -r 0 -c 9  /dev/ttyUSB1 -1
+
+--- modbus_manual.py usage ---
+python3 charger_manual.py /dev/ttyUSB1 11 --start 0 --count 9 --type holding
+python3 charger_manual.py /dev/ttyUSB1 11 --start 3  --type holding --write-linear16 28.7
+
+
+--- WebAPI usage ---
+read power status:
+curl -s -X POST 'http://localhost:8000/api/coils/read' -H 'Content-Type: application/json' -d '{"unit":11}' "addr": 1, "value":0}'
+enable:
+curl -s -X POST 'http://localhost:8000/api/coils/write' -H 'Content-Type: application/json' -d '{"unit":11, "addr": 1, "value":1}'
+disable:
+curl -s -X POST 'http://localhost:8000/api/coils/write' -H 'Content-Type: application/json' -d '{"unit":11, "addr": 1, "value":0}'
+
