@@ -10,6 +10,8 @@ Endpoints implemented (examples):
  - GET  /api/config                       -> read holding registers (func 0x03) and return parsed configuration
  - POST /api/read                         -> read arbitrary registers (body: unit,start,count,register_type)
  - POST /api/write                        -> write single register (supports linear11, linear16 or raw 16-bit)
+ - POST /api/coils/read                   -> read arbitrary registers (body: unit,start,count,register_type)
+ - POST /api/coils/write                  -> write single register (supports linear11, linear16 or raw 16-bit)
 
 Usage: install dependencies: pip install fastapi uvicorn pyserial
 Run: uvicorn charger_api:app --host 0.0.0.0 --port 8000
