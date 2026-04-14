@@ -27,7 +27,6 @@ from typing import AsyncGenerator, List
 
 import httpx
 
-
 # ---------- SSE helpers ----------
 async def sse_event_generator(resp: httpx.Response) -> AsyncGenerator[str, None]:
     """

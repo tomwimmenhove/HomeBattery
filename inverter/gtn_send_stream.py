@@ -8,13 +8,13 @@ if no new value is available the last value is reused.
 
 Usage examples:
   # run, reading power values from stdin (e.g. echo "1234" > fifo)
-  python3 gtn_send_stream.py --port /dev/ttyUSB0 --baud 4800
+  python3 gtn_send_stream.py --baud 4800
 
   # run with 4 Hz sends (default interval=0.25s) and RS-485 mode
-  python3 gtn_send_stream.py --port /dev/ttyUSB0 --rs485 --interval 0.25
+  python3 gtn_send_stream.py --rs485 --interval 0.25
 
 One-liner to install dependency and run (example):
-  pip3 install pyserial && python3 gtn_send_stream.py --port /dev/ttyUSB0
+  pip3 install pyserial && python3 gtn_send_stream.py
 """
 from __future__ import annotations
 import argparse
@@ -23,6 +23,11 @@ import time
 import os
 import fcntl
 from datetime import datetime
+
+from ttyfinder import find_tty_for_vidpid
+
+vidpid = '0403:6001'
+DEFAULT_PORT = find_tty_for_vidpid(vidpid)
 
 def calc_chk(b):
     s = sum(b) & 0xFF
@@ -151,23 +156,18 @@ def read_available_lines_from_stdin(buf_bytes: bytearray, eof_flag_ref):
 
 def main():
     p = argparse.ArgumentParser(description='Continuously send GTN-style frames; accept power from stdin (non-blocking).')
-    p.add_argument('--port', '-p', default=None, help='serial port to send (e.g. /dev/ttyUSB0). If omitted, frames are printed but not sent.')
     p.add_argument('--baud', '-b', type=int, default=4800, help='baud rate (default: 4800)')
     p.add_argument('--interval', '-i', type=float, default=0.25, help='seconds between sends (default 0.25 -> 4Hz)')
     p.add_argument('--rs485', action='store_true', help='try to enable pyserial RS-485 mode (DE/RE toggling)')
     p.add_argument('--initial', type=int, default=0, help='initial power value (watts) used until stdin provides a value (default 0)')
     args = p.parse_args()
 
-    ser = None
-    if args.port:
-        try:
-            ser = open_serial(args.port, args.baud, timeout=1.0, try_rs485=args.rs485)
-        except Exception as e:
-            print(f'Failed to open serial port {args.port}: {e}', file=sys.stderr)
-            sys.exit(2)
-        print(f'Opened {args.port} @ {args.baud} baud. Sending every {args.interval}s')
-    else:
-        print(f'No --port given: will only print frames (dry run). Sending every {args.interval}s')
+    try:
+        ser = open_serial(DEFAULT_PORT, args.baud, timeout=1.0, try_rs485=args.rs485)
+    except Exception as e:
+        print(f'Failed to open serial port {DEFAULT_PORT}: {e}', file=sys.stderr)
+        sys.exit(2)
+    print(f'Opened {DEFAULT_PORT} @ {args.baud} baud. Sending every {args.interval}s')
 
     # prepare non-blocking stdin
     old_stdin_flags = None

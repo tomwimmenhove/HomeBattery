@@ -186,6 +186,8 @@ class SerialManager:
         self._lock = threading.Lock()
         self._ser: Optional[serial.Serial] = None
         self._current_params = None
+        self._last_transaction_time = 0.0
+        self._min_delay_between_transactions = 0.04  # 40 ms minimum spacing
 
     def _open(self, port: str, baud: int, parity: str, timeout: float):
         if self._ser is not None:
@@ -209,18 +211,25 @@ class SerialManager:
     def send_request_and_read_response(self, port: str, baud: int, parity: str, timeout: float,
                                        rts_delay: float, request: bytes, expected_len: int) -> bytes:
         with self._lock:
+            now = time.time()
+            elapsed = now - self._last_transaction_time
+            if elapsed < self._min_delay_between_transactions:
+                time.sleep(self._min_delay_between_transactions - elapsed)
+
             self._open(port, baud, parity, timeout)
             ser = self._ser
             if ser is None:
                 raise RuntimeError("Serial port not open")
-
+    
             ser.timeout = timeout
+            ser.reset_input_buffer()
+    
             ser.setRTS(True)
             ser.write(request)
             ser.flush()
-            time.sleep(rts_delay)
             ser.setRTS(False)
-
+            time.sleep(rts_delay)
+    
             resp = ser.read(expected_len)
             if len(resp) == 0:
                 raise RuntimeError("Timeout waiting for response")

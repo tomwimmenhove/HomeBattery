@@ -43,7 +43,7 @@ python3 charger_manual.py /dev/ttyUSB1 11 --start 3  --type holding --write-line
 
 --- WebAPI usage ---
 read power status:
-curl -s -X POST 'http://localhost:8000/api/coils/read' -H 'Content-Type: application/json' -d '{"unit":11}' "addr": 1, "value":0}'
+curl -s -X POST 'http://localhost:8000/api/coils/read' -H 'Content-Type: application/json' -d '{"unit":11, "addr": 1}'
 enable:
 curl -s -X POST 'http://localhost:8000/api/coils/write' -H 'Content-Type: application/json' -d '{"unit":11, "addr": 1, "value":1}'
 disable:
